@@ -4,9 +4,6 @@ import streamlit as st, numpy as np, pandas as pd
 st.set_page_config(layout="wide")
 
 from IBCF import load_movies, parse_movie_img, myIBCF
-# TODO: Clean up this import if unused after the TODO for 
-# step 2 below is completed.
-from IBCF import load_top_ten_movies
 
 st.title("Movie Recommender System")
 
