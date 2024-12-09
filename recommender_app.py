@@ -1,37 +1,24 @@
-import streamlit as st
-from streamlit_carousel import carousel
-from recommend_funs import load_top_ten_movies
+import streamlit as st, numpy as np, pandas as pd
 
 # Make the web app wide-screen
 st.set_page_config(layout="wide")
 
-st.title("Movie Recommender App")
+from IBCF import load_movies, parse_movie_img, myIBCF
 
-# Set up tabs for each recommender system
-tab1, tab2 = st.tabs(["Top 10 Popular Movies", "Movie Recommending System"])
+st.title("Movie Recommender System")
 
-# First tab highlights the top 10 popular movies by average rating
-top_ten_movies = load_top_ten_movies()
+# Loads the all the movies and selects 100 of them to be rated by the users
+all_movies = load_movies()
 
-# Set up image data list for carousel to render
-carousel_img_items = [
-    dict(
-        title=movie["title"],
-        text=f"Avg Rating: {movie['avg_rating']:.2f}",
-        img=movie["movie_img"],
-    ) 
-    for _, movie in top_ten_movies.iterrows()
-]
+displayed_movies = all_movies.head(100)
 
-tab1.text("Here are the top 10 popular movies based on the average ratings. Popularity in this case refers to having more than 1000 ratings for a movie.")
+for i in range(10):
+    cols = st.columns(10)
 
-with tab1:
-    carousel(items=carousel_img_items, container_height=350, width=0.18)
+    for j in range(10):
+        movie = displayed_movies.iloc[10*i + j, :]
+        cols[j].image(parse_movie_img(movie["movie_id"]), caption=movie["title"], use_container_width=True)
+        cols[j].feedback("stars", key=movie["movie_id"])
 
-# Second tab implements the IBCF system such that it outputs top 10 recommended movies based on user ratings
-tab2.image(top_ten_movies.iloc[2, 2], caption=top_ten_movies.iloc[2, 1])
-
-selected_rating = tab2.feedback("stars")
-
-if selected_rating is not None:
-    st.markdown(f"{top_ten_movies.iloc[2, 1]} was rated {selected_rating + 1} stars")
+if st.button("Submit"):
+    st.write("I am the next biggest star of Hollywood!!")
