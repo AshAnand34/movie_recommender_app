@@ -24,7 +24,7 @@ for i in range(10):
         
         # Parse image and star feedback widgets
         cols[j].image(parse_movie_img(movie_id), caption=movie["title"], use_container_width=True)
-        rating = cols[j].feedback("stars", key=movie["movie_id"])
+        cols[j].feedback("stars", key=movie["movie_id"])
 
 if st.button("Submit"):
    # Convert user ratings to Series
