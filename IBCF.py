@@ -1,6 +1,12 @@
 import pandas as pd, numpy as np, requests, streamlit as st
 
 @st.cache_data
+def load_similarity_matrix():
+    return pd.read_csv("data/similarity_matrix_top_30.csv", index_col='movie_id')
+
+S = load_similarity_matrix()
+
+@st.cache_data
 def load_movies():
     # Define the URL for movie data
     movie_url = "https://liangfgithub.github.io/MovieData/movies.dat?raw=true"
@@ -14,9 +20,14 @@ def load_movies():
 
     # Create a DataFrame from the movie data
     movies = pd.DataFrame(movie_data, columns=['movie_id', 'title', 'genres'])
-    movies['movie_id'] = movies['movie_id'].astype(int)
+    movies['movie_id'] = 'm' + movies['movie_id'].astype(str)
+    movies = movies[movies['movie_id'].isin(S.columns)]
     
     return movies
+
+all_movies = load_movies()
+all_movie_ids = all_movies['movie_id'].sort_values().tolist()
+S = S.loc[all_movie_ids, all_movie_ids]
 
 def parse_movie_img(movie_id):
     return f"https://liangfgithub.github.io/MovieImages/{movie_id}.jpg?raw=true"
@@ -27,14 +38,9 @@ def load_top_ten_movies():
     top_ten_movies['movie_img'] = top_ten_movies['movie_img'] + '.jpg?raw=true'
     return top_ten_movies
 
-@st.cache_data
-def load_similarity_matrix():
-    return pd.read_csv("data/similarity_matrix_top_30.csv")
-
 system1 = load_top_ten_movies()
 
-S = load_similarity_matrix()
-
+@st.cache_data
 def myIBCF(newuser, top_n=10):
     # Initialize predictions with NaN values for all movies
     predictions = pd.Series(np.nan, index=S.columns)
@@ -44,17 +50,15 @@ def myIBCF(newuser, top_n=10):
     for movie in S.columns:
         if movie not in rated_movies:
             # Get the similar movies
-            similar_movies = S[movie].dropna().index
-            rated_similar_movies = [m for m in similar_movies if m in rated_movies]
+            similar_movies = S.loc[movie, rated_movies].dropna()
 
-            if len(rated_similar_movies) > 0:
-                # Calculate numerator and denominator
-                numerator = np.sum([S[movie][m] * newuser[m] for m in rated_similar_movies])
-                denominator = np.sum([S[movie][m] for m in rated_similar_movies])  # No absolute value needed
+            # Calculate numerator and denominator
+            numerator = (similar_movies * newuser.loc[similar_movies.index]).sum()
+            denominator = similar_movies.sum()
 
-                # Update prediction if the denominator is not zero
-                if denominator != 0:
-                    predictions[movie] = numerator / denominator
+            # Update prediction if the denominator is not zero
+            if denominator != 0:
+                predictions[movie] = numerator / denominator
 
     # Convert predictions to a DataFrame for easy sorting and filtering
     pred_df = pd.DataFrame({
