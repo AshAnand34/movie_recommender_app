@@ -30,6 +30,16 @@ if st.button("Submit"):
    # Convert user ratings to Series
     new_user = pd.Series(st.session_state)
 
+    # Check if user has rated any movies
+    user_rated_movies = new_user.dropna()
+
+    if user_rated_movies.empty:
+        # No ratings use System 1
+        st.header("System 1")
+    else:
+        # Rated movies use System 2
+        st.header("System 2")
+
     # Generate recommendations
     recommendations = myIBCF(new_user, top_n=10)
 
